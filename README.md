@@ -10,23 +10,22 @@ A research workflow where specialized agents gather evidence, draft a report, ch
 
 ## Architecture
 
-```mermaid
+```text
 flowchart LR
-    Q[Research topic] --> RES[Researcher]
-    RES --> W[Writer]
-    W --> FC[Fact Checker]
-    FC --> SUP[Supervisor]
-    SUP --> C{Consensus gate}
-    C -->|fails| REV[Needs revision]
-    C -->|passes| H[Human approval]
-    H -->|approve| DONE[Approved report]
-    H -->|reject| REV
-
-    RES -.-> A[(Audit Trail)]
-    W -.-> A
-    FC -.-> A
-    SUP -.-> A
-    H -.-> A
+Q[Research topic] --> RES[Researcher]
+RES --> W[Writer]
+W --> FC[Fact Checker]
+FC --> SUP[Supervisor]
+SUP --> C{Consensus gate}
+C -->|fails| REV[Needs revision]
+C -->|passes| H[Human approval]
+H -->|approve| DONE[Approved report]
+H -->|reject| REV
+RES -.-> A[(Audit Trail)]
+W -.-> A
+FC -.-> A
+SUP -.-> A
+H -.-> A 
 ```
 
 ## Why this is not just an "agent demo"
@@ -52,16 +51,16 @@ Every important transition is persisted to an audit trail.
 
 ## State flow
 
-```mermaid
+```text
 stateDiagram-v2
-    [*] --> Researching
-    Researching --> Drafting
-    Drafting --> FactChecking
-    FactChecking --> Supervising
-    Supervising --> NeedsRevision: consensus fails
-    Supervising --> AwaitingHuman: consensus passes
-    AwaitingHuman --> Approved: human approves
-    AwaitingHuman --> NeedsRevision: human rejects
+[*] --> Researching
+Researching --> Drafting
+Drafting --> FactChecking
+FactChecking --> Supervising
+Supervising --> NeedsRevision: consensus fails
+Supervising --> AwaitingHuman: consensus passes
+AwaitingHuman --> Approved: human approves
+AwaitingHuman --> NeedsRevision: human rejects 
 ```
 
 ## Run locally
