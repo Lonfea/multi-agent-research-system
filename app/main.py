@@ -1,5 +1,8 @@
 import os
 
+from pathlib import Path
+
+from fastapi.responses import FileResponse
 from fastapi import FastAPI, HTTPException
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -26,6 +29,10 @@ pipeline = ResearchPipeline(
 
 app = FastAPI(title="Multi-Agent Research System", version="0.1.0")
 
+
+@app.get("/", include_in_schema=False)
+def ui() -> FileResponse:
+    return FileResponse(Path(__file__).parent / "static" / "index.html")
 
 @app.get("/health")
 def health() -> dict:
