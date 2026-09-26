@@ -6,6 +6,9 @@
 ![FastAPI](https://img.shields.io/badge/API-FastAPI-009688)
 ![Audit](https://img.shields.io/badge/Audit-SQLite-07405E)
 
+
+<p align="center"><img src="docs/architecture.svg" alt="multi-agent-research-system architecture" width="100%"></p>
+
 A research workflow where specialized agents gather evidence, draft a report, challenge unsupported claims, reach an explicit consensus decision, and then hand the result to a human reviewer.
 
 ## Architecture
