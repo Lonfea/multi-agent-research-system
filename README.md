@@ -1,52 +1,95 @@
 # Multi-Agent Research System
 
-A research workflow with specialized researcher, writer, fact-checker, and supervisor roles, explicit consensus rules, a persisted audit trail, and a human approval gate.
+[![CI](https://github.com/Lonfea/multi-agent-research-system/actions/workflows/ci.yml/badge.svg)](https://github.com/Lonfea/multi-agent-research-system/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
+![CrewAI](https://img.shields.io/badge/Agents-CrewAI-black)
+![FastAPI](https://img.shields.io/badge/API-FastAPI-009688)
+![Audit](https://img.shields.io/badge/Audit-SQLite-07405E)
 
-## Workflow
+A research workflow where specialized agents gather evidence, draft a report, challenge unsupported claims, reach an explicit consensus decision, and then hand the result to a human reviewer.
 
-Topic -> Researcher -> Writer -> Fact Checker -> Supervisor -> Consensus Gate -> Human Approval
+## Architecture
 
-CrewAI runs the agent team. SQLite stores every important event so a completed report can be traced back to the task outputs, fact-check verdict, supervisor decision, and human review.
+```mermaid
+flowchart LR
+    Q[Research topic] --> RES[Researcher]
+    RES --> W[Writer]
+    W --> FC[Fact Checker]
+    FC --> SUP[Supervisor]
+    SUP --> C{Consensus gate}
+    C -->|fails| REV[Needs revision]
+    C -->|passes| H[Human approval]
+    H -->|approve| DONE[Approved report]
+    H -->|reject| REV
 
-## Reliability design
+    RES -.-> A[(Audit Trail)]
+    W -.-> A
+    FC -.-> A
+    SUP -.-> A
+    H -.-> A
+```
 
-The system does not treat "multiple agents" as automatic correctness.
+## Why this is not just an "agent demo"
 
-A report reaches the human approval state only when all three conditions hold:
+Multiple agents do not automatically make an answer correct. This system separates **generation, verification, supervision and human accountability**.
 
-1. the fact-check verification score exceeds the configured threshold;
-2. the supervisor approves the report;
-3. the fact checker reports no unsupported claims.
+A report can reach human approval only when:
+1. the fact-check verification score clears the configured threshold;
+2. the supervisor explicitly approves it;
+3. no unsupported claims remain.
 
-Otherwise the run is marked needs_revision.
+Every important transition is persisted to an audit trail.
 
-## Human approval
+## Agent responsibilities
 
-POST /runs/{run_id}/decision persists the reviewer decision and feedback. The audit endpoint returns the complete event history.
+| Role | Responsibility |
+|---|---|
+| Researcher | gather relevant evidence and sources |
+| Writer | synthesize evidence into a structured report |
+| Fact Checker | identify unsupported or inconsistent claims |
+| Supervisor | judge whether the evidence/report satisfies release criteria |
+| Human Reviewer | final approval/rejection with feedback |
 
-## Run
+## State flow
 
-    cd ai-engineering-lab/multi-agent-research
-    python -m venv .venv
-    source .venv/bin/activate
-    pip install -e ".[dev]"
-    cp .env.example .env
-    uvicorn app.main:app --reload
+```mermaid
+stateDiagram-v2
+    [*] --> Researching
+    Researching --> Drafting
+    Drafting --> FactChecking
+    FactChecking --> Supervising
+    Supervising --> NeedsRevision: consensus fails
+    Supervising --> AwaitingHuman: consensus passes
+    AwaitingHuman --> Approved: human approves
+    AwaitingHuman --> NeedsRevision: human rejects
+```
 
-Required credentials:
-- OPENAI_API_KEY
-- SERPER_API_KEY
+## Run locally
+
+```bash
+git clone https://github.com/Lonfea/multi-agent-research-system.git
+cd multi-agent-research-system
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+cp .env.example .env
+uvicorn app.main:app --reload
+```
+
+Credentials used by the current implementation:
+- `OPENAI_API_KEY`
+- `SERPER_API_KEY`
 
 ## API
 
-- POST /research — start a research run
-- GET /runs/{run_id} — report plus complete audit trail
-- POST /runs/{run_id}/decision — approve or reject with reviewer feedback
+- **POST `/research`** — start a research run
+- **GET `/runs/{run_id}`** — report and audit history
+- **POST `/runs/{run_id}/decision`** — human approve/reject decision
 
-## Production upgrades
+## What this demonstrates
 
-- async execution and job queue;
-- source-level citation schema rather than Markdown-only links;
-- retry policy by failure type;
-- eval dataset for factuality and source quality;
-- OpenTelemetry traces across agent and tool calls.
+CrewAI orchestration, role separation, consensus logic, human approval, persistent auditability, API design and deterministic testing around the non-LLM control plane.
+
+## Next production upgrades
+
+Async job execution, structured source-level citations, failure-specific retries, factuality/source-quality evals and OpenTelemetry traces across agents/tools.
